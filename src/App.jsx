@@ -459,7 +459,7 @@ ${rulesContext}`;
   };
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#09090d", color: "#c8c4b8", fontFamily: "'DM Sans', system-ui, sans-serif", overflow: "hidden" }}>
+    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: "#09090d", color: "#c8c4b8", fontFamily: "'DM Sans', system-ui, sans-serif", overflow: "hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&family=DM+Mono:wght@300;400;500&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -474,7 +474,7 @@ ${rulesContext}`;
         .example-btn .ico { font-size: 14px; opacity: 0.65; flex-shrink: 0; width: 20px; text-align: center; }
         .input-wrap { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; display: flex; align-items: center; padding: 4px 4px 4px 0; transition: all 0.2s ease; }
         .input-wrap:focus-within { border-color: rgba(232,200,114,0.25); box-shadow: 0 0 0 3px rgba(232,200,114,0.04); background: rgba(255,255,255,0.045); }
-        .input-wrap input { flex: 1; background: transparent; border: none; outline: none; color: #ddd8cc; font-family: 'DM Sans', sans-serif; font-size: 15px; padding: 14px 20px; font-weight: 400; }
+        .input-wrap input { flex: 1; background: transparent; border: none; outline: none; color: #ddd8cc; font-family: 'DM Sans', sans-serif; font-size: 16px; padding: 14px 20px; font-weight: 400; }
         .input-wrap input::placeholder { color: #3a3a3a; }
         .input-wrap input:disabled { opacity: 0.4; }
         .send-btn { width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; background: linear-gradient(135deg, #d4a853, #b8902e); color: #09090d; }
@@ -486,10 +486,28 @@ ${rulesContext}`;
         .user-bubble { background: linear-gradient(135deg, rgba(232,200,114,0.1), rgba(232,200,114,0.04)); border: 1px solid rgba(232,200,114,0.1); border-radius: 18px 18px 6px 18px; padding: 12px 18px; }
         .assistant-bubble { background: rgba(255,255,255,0.018); border: 1px solid rgba(255,255,255,0.035); border-radius: 6px 18px 18px 18px; padding: 16px 20px; }
         .section-tag { display: inline-flex; align-items: center; font-size: 10px; color: #5a5a4a; font-family: 'DM Mono', monospace; padding: 2px 7px; background: rgba(232,200,114,0.04); border: 1px solid rgba(232,200,114,0.06); border-radius: 5px; }
+        .header-bar { padding: 16px 24px; }
+        .empty-state { padding: 32px 24px; }
+        .examples-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 7px; width: 100%; max-width: 540px; }
+        .chat-area { padding: 20px 24px; }
+        .input-bar { padding: 12px 24px 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+        .disclaimer { font-size: 10px; color: #222; text-align: center; margin-top: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.3px; }
+        @media (max-width: 640px) {
+          .header-bar { padding: 12px 16px; }
+          .empty-state { padding: 24px 16px; }
+          .examples-grid { grid-template-columns: 1fr; }
+          .chat-area { padding: 14px 14px; }
+          .input-bar { padding: 10px 12px 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+          .input-wrap input { padding: 12px 14px; }
+          .user-bubble { padding: 10px 14px; }
+          .assistant-bubble { padding: 12px 14px; }
+          .send-btn { width: 44px; height: 44px; }
+          .disclaimer { display: none; }
+        }
       `}</style>
 
       {/* Header */}
-      <header style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.035)", flexShrink: 0, background: "rgba(9,9,13,0.92)", backdropFilter: "blur(16px)", zIndex: 10 }}>
+      <header className="header-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.035)", flexShrink: 0, background: "rgba(9,9,13,0.92)", backdropFilter: "blur(16px)", zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #d4a853, #a07828)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 2px 10px rgba(212,168,83,0.15)" }}>🥏</div>
           <div>
@@ -503,13 +521,13 @@ ${rulesContext}`;
       {/* Chat */}
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
         {messages.length === 0 ? (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "32px 24px", gap: 32 }}>
+          <div className="empty-state" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 32 }}>
             <div style={{ textAlign: "center", maxWidth: 420 }}>
               <div style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(135deg, rgba(212,168,83,0.1), rgba(212,168,83,0.03))", border: "1px solid rgba(212,168,83,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, margin: "0 auto 16px" }}>🥏</div>
               <h2 style={{ fontSize: 20, fontWeight: 600, color: "#b8b4a8", letterSpacing: "-0.4px", marginBottom: 6 }}>Ask a rules question</h2>
               <p style={{ fontSize: 13.5, color: "#555", lineHeight: 1.6 }}>Searches the full 2026–2027 rulebook, then uses AI to give you a cited answer from the matching sections.</p>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(195px, 1fr))", gap: 7, width: "100%", maxWidth: 540 }}>
+            <div className="examples-grid">
               {EXAMPLES.map((q, i) => (
                 <button key={i} className="example-btn" onClick={() => askQuestion(q.text)}>
                   <span className="ico">{q.icon}</span><span>{q.text}</span>
@@ -518,7 +536,7 @@ ${rulesContext}`;
             </div>
           </div>
         ) : (
-          <div style={{ flex: 1, padding: "20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="chat-area" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
             {messages.map((msg, i) =>
               msg.role === "user" ? (
                 <div key={i} className="chat-msg" style={{ alignSelf: "flex-end", maxWidth: "82%", marginTop: i > 0 && messages[i - 1]?.role === "assistant" ? 10 : 2 }}>
@@ -569,14 +587,14 @@ ${rulesContext}`;
       </div>
 
       {/* Input */}
-      <div style={{ padding: "12px 24px 20px", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.025)", background: "rgba(9,9,13,0.95)", backdropFilter: "blur(16px)" }}>
+      <div className="input-bar" style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.025)", background: "rgba(9,9,13,0.95)", backdropFilter: "blur(16px)" }}>
         <div className="input-wrap">
           <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Ask about a rule..." disabled={loading} />
           <button className="send-btn" onClick={() => askQuestion(input)} disabled={loading || !input.trim()}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
           </button>
         </div>
-        <p style={{ fontSize: 10, color: "#222", textAlign: "center", marginTop: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.3px" }}>
+        <p className="disclaimer">
           Full 2026–2027 rulebook indexed locally · AI answers grounded in rule text · Not an official USAU resource
         </p>
       </div>
