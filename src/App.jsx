@@ -276,11 +276,11 @@ function parseFormatted(text) {
     if (/^#{1,3}\s/.test(trimmed)) {
       flushBullets();
       const level = trimmed.match(/^(#{1,3})/)[1].length;
-      blocks.push({ type: "heading", level, text: trimmed.replace(/^#{1,3}\s*/, "") });
+      blocks.push({ type: "heading", level, text: trimmed.replace(/^#{1,3}\s*/, "").replace(/\*\*/g, "") });
     } else if (trimmed === "---" || trimmed === "***") {
       flushBullets();
       blocks.push({ type: "hr" });
-    } else if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
+    } else if (trimmed.startsWith("- ") || trimmed.startsWith("• ") || trimmed.startsWith("* ")) {
       currentBullets.push(trimmed.slice(2));
     } else if (/^\d+\.\s/.test(trimmed)) {
       currentBullets.push(trimmed.replace(/^\d+\.\s*/, ""));
@@ -296,8 +296,8 @@ function parseFormatted(text) {
 
 function InlineFormatted({ text }) {
   const parts = [];
-  // Match **bold**, `code`, and plain text
-  const regex = /\*\*(.+?)\*\*|`([^`]+)`/g;
+  // Match **bold**, *italic*, `code`, and plain text
+  const regex = /\*\*(.+?)\*\*|\*([^*\n]+)\*|`([^`]+)`/g;
   let lastIndex = 0;
   let match;
   let key = 0;
@@ -310,16 +310,22 @@ function InlineFormatted({ text }) {
           color: "#edd98b", fontWeight: 600, fontFamily: "'DM Mono', monospace",
           fontSize: "0.9em", background: "rgba(232,200,114,0.08)", padding: "2px 6px",
           borderRadius: 4, border: "1px solid rgba(232,200,114,0.1)",
+          display: "inline", overflowWrap: "anywhere",
         }}>{match[1]}</span>
       );
     } else if (match[2]) {
+      // Italic
+      parts.push(
+        <em key={key++} style={{ color: "#c8c4b4", fontStyle: "italic" }}>{match[2]}</em>
+      );
+    } else if (match[3]) {
       // Inline code
       parts.push(
         <code key={key++} style={{
           color: "#c0baa8", fontFamily: "'DM Mono', monospace", fontSize: "0.88em",
           background: "rgba(255,255,255,0.05)", padding: "2px 5px", borderRadius: 3,
           border: "1px solid rgba(255,255,255,0.06)",
-        }}>{match[2]}</code>
+        }}>{match[3]}</code>
       );
     }
     lastIndex = regex.lastIndex;
@@ -344,14 +350,14 @@ function FormattedMessage({ text }) {
           );
         }
         if (block.type === "paragraph") return (
-          <p key={i} style={{ margin: 0, lineHeight: 1.8, color: "#b0ac9f" }}>
+          <p key={i} style={{ margin: 0, lineHeight: 1.8, color: "#b0ac9f", wordBreak: "break-word", overflowWrap: "anywhere" }}>
             <InlineFormatted text={block.text} />
           </p>
         );
         if (block.type === "bullets") return (
           <ul key={i} style={{ margin: "2px 0", paddingLeft: 4, display: "flex", flexDirection: "column", gap: 7 }}>
             {block.items.map((item, j) => (
-              <li key={j} style={{ lineHeight: 1.75, listStyleType: "none", position: "relative", paddingLeft: 20, fontSize: "0.96em", color: "#aaa89c" }}>
+              <li key={j} style={{ lineHeight: 1.75, listStyleType: "none", position: "relative", paddingLeft: 20, fontSize: "0.96em", color: "#aaa89c", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                 <span style={{ position: "absolute", left: 3, top: "0.6em", width: 6, height: 6, borderRadius: "50%", background: "rgba(232,200,114,0.3)", border: "1px solid rgba(232,200,114,0.15)" }} />
                 <InlineFormatted text={item} />
               </li>
@@ -485,7 +491,7 @@ ${rulesContext}`;
         .clear-btn { background: none; border: 1px solid rgba(255,255,255,0.06); color: #4a4a4a; font-size: 11px; font-family: 'DM Mono', monospace; padding: 5px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; text-transform: uppercase; }
         .clear-btn:hover { border-color: rgba(255,255,255,0.1); color: #777; }
         .user-bubble { background: linear-gradient(135deg, rgba(232,200,114,0.1), rgba(232,200,114,0.04)); border: 1px solid rgba(232,200,114,0.1); border-radius: 18px 18px 6px 18px; padding: 12px 18px; }
-        .assistant-bubble { background: rgba(255,255,255,0.018); border: 1px solid rgba(255,255,255,0.035); border-radius: 6px 18px 18px 18px; padding: 16px 20px; }
+        .assistant-bubble { background: rgba(255,255,255,0.018); border: 1px solid rgba(255,255,255,0.035); border-radius: 6px 18px 18px 18px; padding: 16px 20px; word-break: break-word; overflow-wrap: anywhere; }
         .section-tag { display: inline-flex; align-items: center; font-size: 10px; color: #5a5a4a; font-family: 'DM Mono', monospace; padding: 2px 7px; background: rgba(232,200,114,0.04); border: 1px solid rgba(232,200,114,0.06); border-radius: 5px; }
         .header-bar { padding: 16px 24px; }
         .empty-state { padding: 32px 24px; }
