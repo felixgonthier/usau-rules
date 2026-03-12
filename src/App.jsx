@@ -246,7 +246,8 @@ function searchRules(query) {
     // Body text match
     const bodyLower = section.text.toLowerCase();
     for (const w of words) {
-      const regex = new RegExp(w, 'gi');
+      const escapedW = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escapedW, 'gi');
       const matches = bodyLower.match(regex);
       if (matches) score += matches.length;
     }
@@ -386,7 +387,7 @@ export default function USAURulesHelper() {
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "auto" }); }, [messages, loading]);
   useEffect(() => { if (!loading) inputRef.current?.focus(); }, [loading]);
 
   const askQuestion = useCallback(async (question) => {
@@ -459,7 +460,7 @@ ${rulesContext}`;
   };
 
   return (
-    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: "#09090d", color: "#c8c4b8", fontFamily: "'DM Sans', system-ui, sans-serif", overflow: "hidden" }}>
+    <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#09090d", color: "#c8c4b8", fontFamily: "'DM Sans', system-ui, sans-serif", overflow: "hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&family=DM+Mono:wght@300;400;500&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -519,7 +520,7 @@ ${rulesContext}`;
       </header>
 
       {/* Chat */}
-      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", overscrollBehavior: "none" }}>
         {messages.length === 0 ? (
           <div className="empty-state" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 32 }}>
             <div style={{ textAlign: "center", maxWidth: 420 }}>
