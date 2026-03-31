@@ -416,6 +416,12 @@ export default function USAURulesHelper() {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "auto" }); }, [messages, loading]);
   useEffect(() => { if (!loading) inputRef.current?.focus(); }, [loading]);
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [input]);
 
   const askQuestion = useCallback(async (question) => {
     if (!question.trim() || loading) return;
@@ -565,7 +571,7 @@ ${rulesContext}`;
         .example-btn { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05); color: #888; padding: 11px 16px; border-radius: 12px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; font-family: 'DM Sans', sans-serif; text-align: left; line-height: 1.35; display: flex; align-items: center; gap: 10px; }
         .example-btn:hover { background: rgba(232,200,114,0.05); border-color: rgba(232,200,114,0.12); color: #bbb; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
         .example-btn .ico { font-size: 14px; opacity: 0.65; flex-shrink: 0; width: 20px; text-align: center; }
-        .input-wrap { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; display: flex; align-items: flex-end; padding: 4px 4px 4px 0; transition: all 0.2s ease; }
+        .input-wrap { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; display: flex; align-items: stretch; padding: 4px 0 4px 0; transition: all 0.2s ease; }
         .input-wrap:focus-within { border-color: rgba(232,200,114,0.25); box-shadow: 0 0 0 3px rgba(232,200,114,0.04); background: rgba(255,255,255,0.045); }
         .input-wrap textarea { flex: 1; background: transparent; border: none; outline: none; color: #ddd8cc; font-family: 'DM Sans', sans-serif; font-size: 16px; padding: 14px 20px; font-weight: 400; resize: none; overflow-y: auto; min-height: 52px; max-height: 180px; line-height: 1.5; }
         .input-wrap textarea::placeholder { color: #3a3a3a; }
@@ -726,16 +732,18 @@ ${rulesContext}`;
             disabled={loading}
             style={{ height: "52px" }}
           />
-          <button className={`mic-btn${isListening ? " listening" : ""}`} onClick={toggleVoice} disabled={loading} title={isListening ? "Stop recording" : "Ask by voice"}>
-            {isListening ? (
-              <svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" opacity="0.3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3M9 21h6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
-            )}
-          </button>
-          <button className="send-btn" onClick={() => askQuestion(input)} disabled={loading || !input.trim()}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
-          </button>
+          <div style={{ display: "flex", alignItems: "center", alignSelf: input ? "flex-end" : "center", flexShrink: 0, paddingRight: "4px" }}>
+            <button className={`mic-btn${isListening ? " listening" : ""}`} onClick={toggleVoice} disabled={loading} title={isListening ? "Stop recording" : "Ask by voice"}>
+              {isListening ? (
+                <svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" opacity="0.3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3M9 21h6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+              )}
+            </button>
+            <button className="send-btn" onClick={() => askQuestion(input)} disabled={loading || !input.trim()}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
+            </button>
+          </div>
         </div>
         <p className="disclaimer">
           {lang === "fr"
