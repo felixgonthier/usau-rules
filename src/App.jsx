@@ -527,6 +527,7 @@ ${rulesContext}`;
       }
     };
     recognition.onresult = (e) => {
+      if (recognitionRef.current !== recognition) return;
       let interim = "";
       let final = "";
       for (let i = 0; i < e.results.length; i++) {
