@@ -391,6 +391,7 @@ export default function USAURulesHelper() {
   const [loading, setLoading] = useState(false);
   const [searchedSections, setSearchedSections] = useState([]);
   const [isListening, setIsListening] = useState(false);
+  const [voiceLang, setVoiceLang] = useState("en-US");
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -402,6 +403,7 @@ export default function USAURulesHelper() {
     if (!question.trim() || loading) return;
     setMessages(prev => [...prev, { role: "user", text: question.trim() }]);
     setInput("");
+    if (inputRef.current) inputRef.current.style.height = "52px";
     setLoading(true);
     setSearchedSections([]);
 
@@ -480,7 +482,7 @@ ${rulesContext}`;
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
-    recognition.lang = "en-US";
+    recognition.lang = voiceLang;
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
     recognition.onerror = (e) => {
@@ -502,7 +504,7 @@ ${rulesContext}`;
     } catch {
       setIsListening(false);
     }
-  }, [isListening]);
+  }, [isListening, voiceLang]);
 
   return (
     <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#09090d", color: "#c8c4b8", fontFamily: "'DM Sans', system-ui, sans-serif", overflow: "hidden" }}>
@@ -518,11 +520,14 @@ ${rulesContext}`;
         .example-btn { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05); color: #888; padding: 11px 16px; border-radius: 12px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; font-family: 'DM Sans', sans-serif; text-align: left; line-height: 1.35; display: flex; align-items: center; gap: 10px; }
         .example-btn:hover { background: rgba(232,200,114,0.05); border-color: rgba(232,200,114,0.12); color: #bbb; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
         .example-btn .ico { font-size: 14px; opacity: 0.65; flex-shrink: 0; width: 20px; text-align: center; }
-        .input-wrap { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; display: flex; align-items: center; padding: 4px 4px 4px 0; transition: all 0.2s ease; }
+        .input-wrap { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; display: flex; align-items: flex-end; padding: 4px 4px 4px 0; transition: all 0.2s ease; }
         .input-wrap:focus-within { border-color: rgba(232,200,114,0.25); box-shadow: 0 0 0 3px rgba(232,200,114,0.04); background: rgba(255,255,255,0.045); }
-        .input-wrap input { flex: 1; background: transparent; border: none; outline: none; color: #ddd8cc; font-family: 'DM Sans', sans-serif; font-size: 16px; padding: 14px 20px; font-weight: 400; }
-        .input-wrap input::placeholder { color: #3a3a3a; }
-        .input-wrap input:disabled { opacity: 0.4; }
+        .input-wrap textarea { flex: 1; background: transparent; border: none; outline: none; color: #ddd8cc; font-family: 'DM Sans', sans-serif; font-size: 16px; padding: 14px 20px; font-weight: 400; resize: none; overflow-y: auto; min-height: 52px; max-height: 180px; line-height: 1.5; }
+        .input-wrap textarea::placeholder { color: #3a3a3a; }
+        .input-wrap textarea:disabled { opacity: 0.4; }
+        .lang-toggle { background: none; border: 1px solid rgba(255,255,255,0.07); color: #444; font-size: 10px; font-family: 'DM Mono', monospace; padding: 3px 7px; border-radius: 6px; cursor: pointer; transition: all 0.2s; flex-shrink: 0; margin-right: 4px; letter-spacing: 0.4px; margin-bottom: 6px; }
+        .lang-toggle:hover { color: #888; border-color: rgba(255,255,255,0.12); }
+        .lang-toggle.active { color: #d4a853; border-color: rgba(212,168,83,0.25); }
         .send-btn { width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; background: linear-gradient(135deg, #d4a853, #b8902e); color: #09090d; }
         .send-btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 2px 14px rgba(212,168,83,0.25); }
         .send-btn:disabled { opacity: 0.12; cursor: not-allowed; }
@@ -555,7 +560,7 @@ ${rulesContext}`;
           .examples-grid { grid-template-columns: 1fr; }
           .chat-area { padding: 14px 14px; }
           .input-bar { padding: 10px 12px 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
-          .input-wrap input { padding: 12px 14px; }
+          .input-wrap textarea { padding: 12px 14px; min-height: 48px; }
           .user-bubble { padding: 10px 14px; }
           .assistant-bubble { padding: 12px 14px; }
           .send-btn { width: 44px; height: 44px; }
@@ -648,11 +653,32 @@ ${rulesContext}`;
         {isListening && (
           <div className="rec-pill">
             <span className="rec-dot" />
-            <span>Listening — speak now, tap mic to stop</span>
+            <span>{voiceLang === "fr-FR" ? "Écoute en cours — parlez, appuyez sur le micro pour arrêter" : "Listening — speak now, tap mic to stop"}</span>
           </div>
         )}
         <div className={`input-wrap${isListening ? " recording" : ""}`}>
-          <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={isListening ? "Speak now…" : "Ask about a rule…"} disabled={loading} />
+          <textarea
+            ref={inputRef}
+            value={input}
+            rows={1}
+            onChange={e => {
+              setInput(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = e.target.scrollHeight + "px";
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder={isListening ? (voiceLang === "fr-FR" ? "Parlez maintenant…" : "Speak now…") : "Ask about a rule…"}
+            disabled={loading}
+            style={{ height: "52px" }}
+          />
+          <button
+            className={`lang-toggle${voiceLang === "fr-FR" ? " active" : ""}`}
+            onClick={() => setVoiceLang(v => v === "en-US" ? "fr-FR" : "en-US")}
+            title="Toggle voice language"
+            disabled={isListening}
+          >
+            {voiceLang === "fr-FR" ? "FR" : "EN"}
+          </button>
           <button className={`mic-btn${isListening ? " listening" : ""}`} onClick={toggleVoice} disabled={loading} title={isListening ? "Stop recording" : "Ask by voice"}>
             {isListening ? (
               <svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" opacity="0.3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3M9 21h6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
