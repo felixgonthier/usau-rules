@@ -570,7 +570,7 @@ ${rulesContext}`;
         .input-wrap textarea { flex: 1; background: transparent; border: none; outline: none; color: #ddd8cc; font-family: 'DM Sans', sans-serif; font-size: 16px; padding: 14px 20px; font-weight: 400; resize: none; overflow-y: auto; min-height: 52px; max-height: 180px; line-height: 1.5; }
         .input-wrap textarea::placeholder { color: #3a3a3a; }
         .input-wrap textarea:disabled { opacity: 0.4; }
-        .lang-toggle { background: none; border: 1px solid rgba(255,255,255,0.07); color: #444; font-size: 10px; font-family: 'DM Mono', monospace; padding: 3px 7px; border-radius: 6px; cursor: pointer; transition: all 0.2s; flex-shrink: 0; margin-right: 4px; letter-spacing: 0.4px; margin-bottom: 6px; }
+        .lang-toggle { background: none; border: 1px solid rgba(255,255,255,0.07); color: #444; font-size: 10px; font-family: 'DM Mono', monospace; padding: 3px 7px; border-radius: 6px; cursor: pointer; transition: all 0.2s; flex-shrink: 0; letter-spacing: 0.4px; }
         .lang-toggle:hover { color: #888; border-color: rgba(255,255,255,0.12); }
         .lang-toggle.active { color: #d4a853; border-color: rgba(212,168,83,0.25); }
         .send-btn { width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; background: linear-gradient(135deg, #d4a853, #b8902e); color: #09090d; }
@@ -622,7 +622,17 @@ ${rulesContext}`;
             <p style={{ fontSize: 10.5, color: "#4a4a4a", fontFamily: "'DM Mono', monospace", letterSpacing: "0.4px", marginTop: 1 }}>{lang === "fr" ? "2024–2025 FR" : "2026–2027 EN"} · {RULES_DBS[lang].length} {lang === "fr" ? "sections indexées" : "sections indexed"}</p>
           </div>
         </div>
-        {messages.length > 0 && <button className="clear-btn" onClick={() => { setMessages([]); setInput(""); }}>Clear</button>}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            className={`lang-toggle${lang === "fr" ? " active" : ""}`}
+            onClick={() => { setLang(l => l === "en" ? "fr" : "en"); setMessages([]); setInput(""); }}
+            title={lang === "fr" ? "Passer en anglais" : "Switch to French"}
+            disabled={isListening}
+          >
+            {lang === "fr" ? "FR" : "EN"}
+          </button>
+          {messages.length > 0 && <button className="clear-btn" onClick={() => { setMessages([]); setInput(""); }}>Clear</button>}
+        </div>
       </header>
 
       {/* Chat */}
@@ -716,14 +726,6 @@ ${rulesContext}`;
             disabled={loading}
             style={{ height: "52px" }}
           />
-          <button
-            className={`lang-toggle${lang === "fr" ? " active" : ""}`}
-            onClick={() => { setLang(l => l === "en" ? "fr" : "en"); setMessages([]); setInput(""); }}
-            title={lang === "fr" ? "Passer en anglais" : "Switch to French"}
-            disabled={isListening}
-          >
-            {lang === "fr" ? "FR" : "EN"}
-          </button>
           <button className={`mic-btn${isListening ? " listening" : ""}`} onClick={toggleVoice} disabled={loading} title={isListening ? "Stop recording" : "Ask by voice"}>
             {isListening ? (
               <svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" opacity="0.3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3M9 21h6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
