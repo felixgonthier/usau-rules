@@ -483,14 +483,23 @@ ${rulesContext}`;
     recognition.lang = "en-US";
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
-    recognition.onerror = () => setIsListening(false);
+    recognition.onerror = (e) => {
+      setIsListening(false);
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        alert("Microphone access was denied. Please allow microphone permission in your browser settings and try again.");
+      }
+    };
     recognition.onresult = (e) => {
       const transcript = e.results[0][0].transcript;
       setInput(transcript);
       inputRef.current?.focus();
     };
     recognitionRef.current = recognition;
-    recognition.start();
+    try {
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
   }, [isListening]);
 
   return (
