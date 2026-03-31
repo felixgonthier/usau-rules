@@ -412,12 +412,16 @@ export default function USAURulesHelper() {
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
+  const askQuestionRef = useRef(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "auto" }); }, [messages, loading]);
   useEffect(() => { if (!loading) inputRef.current?.focus(); }, [loading]);
 
   const askQuestion = useCallback(async (question) => {
     if (!question.trim() || loading) return;
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    setIsListening(false);
     setMessages(prev => [...prev, { role: "user", text: question.trim() }]);
     setInput("");
     if (inputRef.current) inputRef.current.style.height = "52px";
@@ -486,6 +490,8 @@ ${rulesContext}`;
     }
   }, [messages, loading]);
 
+  askQuestionRef.current = askQuestion;
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askQuestion(input); }
   };
@@ -501,23 +507,40 @@ ${rulesContext}`;
       return;
     }
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = lang === "fr" ? "fr-FR" : "en-US";
+    let pendingFinal = "";
     recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
+    recognition.onend = () => {
+      setIsListening(false);
+      if (pendingFinal.trim() && recognitionRef.current === recognition) {
+        askQuestionRef.current(pendingFinal.trim());
+      }
+      pendingFinal = "";
+    };
     recognition.onerror = (e) => {
       setIsListening(false);
+      pendingFinal = "";
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
         alert("Microphone access was denied. Please allow microphone permission in your browser settings and try again.");
       }
     };
     recognition.onresult = (e) => {
-      let transcript = "";
+      let interim = "";
+      let final = "";
       for (let i = 0; i < e.results.length; i++) {
-        transcript += e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          final += e.results[i][0].transcript;
+        } else {
+          interim += e.results[i][0].transcript;
+        }
       }
-      setInput(transcript);
+      if (final) pendingFinal = final;
+      setInput((final || interim).trim());
+      if (final.trim()) {
+        recognition.stop();
+      }
     };
     recognitionRef.current = recognition;
     try {
