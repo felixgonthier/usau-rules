@@ -390,8 +390,10 @@ export default function USAURulesHelper() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchedSections, setSearchedSections] = useState([]);
+  const [isListening, setIsListening] = useState(false);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "auto" }); }, [messages, loading]);
   useEffect(() => { if (!loading) inputRef.current?.focus(); }, [loading]);
@@ -465,6 +467,32 @@ ${rulesContext}`;
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askQuestion(input); }
   };
 
+  const toggleVoice = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input is not supported in your browser. Try Chrome or Safari.");
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    recognition.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      setInput(transcript);
+      inputRef.current?.focus();
+    };
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, [isListening]);
+
   return (
     <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#09090d", color: "#c8c4b8", fontFamily: "'DM Sans', system-ui, sans-serif", overflow: "hidden" }}>
       <style>{`
@@ -488,6 +516,13 @@ ${rulesContext}`;
         .send-btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 2px 14px rgba(212,168,83,0.25); }
         .send-btn:disabled { opacity: 0.12; cursor: not-allowed; }
         .send-btn svg { width: 17px; height: 17px; }
+        .mic-btn { width: 38px; height: 38px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; background: transparent; color: #444; margin-right: 2px; }
+        .mic-btn:hover:not(:disabled) { color: #777; background: rgba(255,255,255,0.04); }
+        .mic-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+        .mic-btn svg { width: 16px; height: 16px; }
+        .mic-btn.listening { color: #d4a853; }
+        @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(212,168,83,0.4); } 50% { box-shadow: 0 0 0 6px rgba(212,168,83,0); } }
+        .mic-btn.listening { animation: micPulse 1.2s ease-in-out infinite; }
         .clear-btn { background: none; border: 1px solid rgba(255,255,255,0.06); color: #4a4a4a; font-size: 11px; font-family: 'DM Mono', monospace; padding: 5px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; text-transform: uppercase; }
         .clear-btn:hover { border-color: rgba(255,255,255,0.1); color: #777; }
         .user-bubble { background: linear-gradient(135deg, rgba(232,200,114,0.1), rgba(232,200,114,0.04)); border: 1px solid rgba(232,200,114,0.1); border-radius: 18px 18px 6px 18px; padding: 12px 18px; }
@@ -596,7 +631,14 @@ ${rulesContext}`;
       {/* Input */}
       <div className="input-bar" style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.025)", background: "rgba(9,9,13,0.95)", backdropFilter: "blur(16px)" }}>
         <div className="input-wrap">
-          <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Ask about a rule..." disabled={loading} />
+          <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={isListening ? "Listening…" : "Ask about a rule…"} disabled={loading} />
+          <button className={`mic-btn${isListening ? " listening" : ""}`} onClick={toggleVoice} disabled={loading} title={isListening ? "Stop recording" : "Ask by voice"}>
+            {isListening ? (
+              <svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" opacity="0.3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3M9 21h6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+            )}
+          </button>
           <button className="send-btn" onClick={() => askQuestion(input)} disabled={loading || !input.trim()}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
           </button>
