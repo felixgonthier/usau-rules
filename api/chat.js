@@ -24,11 +24,14 @@ export default async function handler(req, res) {
           },
         ],
       });
+      const isFr = system && system.includes("français");
       contents.push({
         role: "model",
         parts: [
           {
-            text: "Understood. I will answer questions about the 2026-2027 USAU rules using only the provided rules text, citing specific rule numbers.",
+            text: isFr
+              ? "Compris. Je répondrai aux questions sur les règles USAU en utilisant uniquement le texte des règles fourni, en citant les numéros de règles spécifiques."
+              : "Understood. I will answer questions about the USAU rules using only the provided rules text, citing specific rule numbers.",
           },
         ],
       });

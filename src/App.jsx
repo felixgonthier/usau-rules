@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import rulesEn from "./data/rules_en.json";
+import rulesFr from "./data/rules_fr.json";
 
-// ─── Rules Database: 2026-2027 Official Rules of Ultimate ───
-// Each section stored separately for targeted retrieval
-const RULES_DB = [
+const RULES_DBS = { en: rulesEn, fr: rulesFr };
+
+// ─── Legacy hardcoded DB kept as fallback (replaced by PDF-extracted JSON) ───
+const RULES_DB_LEGACY = [
 {id:"intro", title:"Introduction", keywords:["introduction","description","ultimate","non-contact","self-officiated","seven players","event organizer clause","captain's clause"],
 text:`1.A. Description: Ultimate is a non-contact, self-officiated disc sport played by two teams of seven players. The object of the game is to score goals. A goal is scored when a player catches any legal pass in the end zone that player is attacking. A player may not run while holding the disc. The disc is advanced by passing it to other players. The disc may be passed in any direction. Any time a pass is incomplete, a turnover occurs, resulting in an immediate change of the team in possession of the disc.
 1.B. Rules Variations: 1.B.2. Event Organizer Clause: The event organizer may modify rules relating to game logistics (game total, time caps, halftime length, timeouts, uniform requirements, observer operations). 1.B.3. Captain's Clause: For games not subject to the event organizer clause, a game may be played under any variation agreed upon by captains.
@@ -225,11 +228,11 @@ text:`Appendix B: Mixed Rules and Adaptations (2026-2027):
 ];
 
 // ─── Search Logic ───
-function searchRules(query) {
+function searchRules(query, db) {
   const q = query.toLowerCase();
   const words = q.split(/\s+/).filter(w => w.length > 2);
 
-  const scored = RULES_DB.map(section => {
+  const scored = db.map(section => {
     let score = 0;
     // Keyword matches (strongest signal)
     for (const kw of section.keywords) {
@@ -370,20 +373,34 @@ function FormattedMessage({ text }) {
   );
 }
 
-const EXAMPLES = [
-  { text: "What happens on a contested foul?", icon: "⚡" },
-  { text: "How does the stall count work?", icon: "⏱" },
-  { text: "What is a pick?", icon: "🚧" },
-  { text: "Explain the continuation rule", icon: "▶" },
-  { text: "When can I call a travel?", icon: "👟" },
-  { text: "What are the marking violations?", icon: "🛡" },
-  { text: "How do time caps work?", icon: "⏳" },
-  { text: "What is dangerous play?", icon: "⚠" },
-  { text: "Pull goes OB — what now?", icon: "↗" },
-  { text: "How does force-out foul work?", icon: "💨" },
-  { text: "What changed from 2024-25?", icon: "🆕" },
-  { text: "What are blue/yellow/red cards?", icon: "🟨" },
-];
+const EXAMPLES = {
+  en: [
+    { text: "What happens on a contested foul?", icon: "⚡" },
+    { text: "How does the stall count work?", icon: "⏱" },
+    { text: "What is a pick?", icon: "🚧" },
+    { text: "Explain the continuation rule", icon: "▶" },
+    { text: "When can I call a travel?", icon: "👟" },
+    { text: "What are the marking violations?", icon: "🛡" },
+    { text: "How do time caps work?", icon: "⏳" },
+    { text: "What is dangerous play?", icon: "⚠" },
+    { text: "Pull goes OB — what now?", icon: "↗" },
+    { text: "How does force-out foul work?", icon: "💨" },
+    { text: "What are blue/yellow/red cards?", icon: "🟨" },
+  ],
+  fr: [
+    { text: "Que se passe-t-il sur une faute contestée?", icon: "⚡" },
+    { text: "Comment fonctionne le compte de stalle?", icon: "⏱" },
+    { text: "Qu'est-ce qu'un pick?", icon: "🚧" },
+    { text: "Expliquer la règle de continuation", icon: "▶" },
+    { text: "Quand puis-je appeler un marcher?", icon: "👟" },
+    { text: "Quelles sont les violations du marqueur?", icon: "🛡" },
+    { text: "Comment fonctionnent les limites de temps?", icon: "⏳" },
+    { text: "Qu'est-ce que le jeu dangereux?", icon: "⚠" },
+    { text: "Le lancer d'engagement sort — que faire?", icon: "↗" },
+    { text: "Comment fonctionne la faute de force-out?", icon: "💨" },
+    { text: "Cartes bleues/jaunes/rouges — explications", icon: "🟨" },
+  ],
+};
 
 export default function USAURulesHelper() {
   const [messages, setMessages] = useState([]);
@@ -391,7 +408,7 @@ export default function USAURulesHelper() {
   const [loading, setLoading] = useState(false);
   const [searchedSections, setSearchedSections] = useState([]);
   const [isListening, setIsListening] = useState(false);
-  const [voiceLang, setVoiceLang] = useState("en-US");
+  const [lang, setLang] = useState("en");
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -407,15 +424,19 @@ export default function USAURulesHelper() {
     setLoading(true);
     setSearchedSections([]);
 
+    const db = RULES_DBS[lang];
+    const edition = lang === "fr" ? "2024-2025" : "2026-2027";
+    const replyLang = lang === "fr" ? "French (français)" : "English";
+
     try {
       // Step 1: Local search to find relevant rule sections
-      const results = searchRules(question.trim());
+      const results = searchRules(question.trim(), db);
       const sectionNames = results.map(r => r.title);
       setSearchedSections(sectionNames);
 
       const rulesContext = results.length > 0
         ? results.map(r => `=== ${r.title} ===\n${r.text}`).join("\n\n")
-        : "No specific rules sections matched. Use your knowledge of the 2026-2027 USAU rules to answer.";
+        : `No specific rules sections matched. Use your knowledge of the ${edition} USAU rules to answer.`;
 
       // Step 2: Send question + relevant sections to API
       const conversationMessages = [
@@ -423,7 +444,7 @@ export default function USAURulesHelper() {
         { role: "user", content: question.trim() },
       ];
 
-      const systemPrompt = `You are an expert on the 2026-2027 USAU Official Rules of Ultimate. Answer the user's question using ONLY the rules text provided below. Cite specific rule numbers (e.g. **17.C.3**). Be concise and practical.
+      const systemPrompt = `You are an expert on the ${edition} Official Rules of Ultimate. Answer the user's question using ONLY the rules text provided below. Cite specific rule numbers (e.g. **17.C.3**). Be concise and practical. Always reply in ${replyLang}.
 
 Format responses clearly:
 - Use **bold** for rule numbers and key terms
@@ -432,7 +453,7 @@ Format responses clearly:
 - Use --- to separate distinct sections when helpful
 - Keep paragraphs short (2-3 sentences max)
 
-RULES TEXT (from the 2026-2027 Official Rules of Ultimate):
+RULES TEXT (from the ${edition} Official Rules of Ultimate):
 ${rulesContext}`;
 
       const response = await fetch("/api/chat", {
@@ -482,7 +503,7 @@ ${rulesContext}`;
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
-    recognition.lang = voiceLang;
+    recognition.lang = lang === "fr" ? "fr-FR" : "en-US";
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
     recognition.onerror = (e) => {
@@ -504,7 +525,7 @@ ${rulesContext}`;
     } catch {
       setIsListening(false);
     }
-  }, [isListening, voiceLang]);
+  }, [isListening, lang]);
 
   return (
     <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#09090d", color: "#c8c4b8", fontFamily: "'DM Sans', system-ui, sans-serif", overflow: "hidden" }}>
@@ -574,7 +595,7 @@ ${rulesContext}`;
           <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #d4a853, #a07828)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 2px 10px rgba(212,168,83,0.15)" }}>🥏</div>
           <div>
             <h1 style={{ fontSize: 16, fontWeight: 700, color: "#e8e4da", letterSpacing: "-0.3px" }}>USAU Rules</h1>
-            <p style={{ fontSize: 10.5, color: "#4a4a4a", fontFamily: "'DM Mono', monospace", letterSpacing: "0.4px", marginTop: 1 }}>2026–2027 · {RULES_DB.length} sections indexed</p>
+            <p style={{ fontSize: 10.5, color: "#4a4a4a", fontFamily: "'DM Mono', monospace", letterSpacing: "0.4px", marginTop: 1 }}>{lang === "fr" ? "2024–2025 FR" : "2026–2027 EN"} · {RULES_DBS[lang].length} {lang === "fr" ? "sections indexées" : "sections indexed"}</p>
           </div>
         </div>
         {messages.length > 0 && <button className="clear-btn" onClick={() => { setMessages([]); setInput(""); }}>Clear</button>}
@@ -586,11 +607,11 @@ ${rulesContext}`;
           <div className="empty-state" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 32 }}>
             <div style={{ textAlign: "center", maxWidth: 420 }}>
               <div style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(135deg, rgba(212,168,83,0.1), rgba(212,168,83,0.03))", border: "1px solid rgba(212,168,83,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, margin: "0 auto 16px" }}>🥏</div>
-              <h2 style={{ fontSize: 20, fontWeight: 600, color: "#b8b4a8", letterSpacing: "-0.4px", marginBottom: 6 }}>Ask a rules question</h2>
-              <p style={{ fontSize: 13.5, color: "#555", lineHeight: 1.6 }}>Searches the full 2026–2027 rulebook, then uses AI to give you a cited answer from the matching sections.</p>
+              <h2 style={{ fontSize: 20, fontWeight: 600, color: "#b8b4a8", letterSpacing: "-0.4px", marginBottom: 6 }}>{lang === "fr" ? "Posez une question sur les règles" : "Ask a rules question"}</h2>
+              <p style={{ fontSize: 13.5, color: "#555", lineHeight: 1.6 }}>{lang === "fr" ? "Recherche dans le règlement 2024–2025, puis génère une réponse citée par l'IA." : "Searches the full 2026–2027 rulebook, then uses AI to give you a cited answer from the matching sections."}</p>
             </div>
             <div className="examples-grid">
-              {EXAMPLES.map((q, i) => (
+              {EXAMPLES[lang].map((q, i) => (
                 <button key={i} className="example-btn" onClick={() => askQuestion(q.text)}>
                   <span className="ico">{q.icon}</span><span>{q.text}</span>
                 </button>
@@ -653,7 +674,7 @@ ${rulesContext}`;
         {isListening && (
           <div className="rec-pill">
             <span className="rec-dot" />
-            <span>{voiceLang === "fr-FR" ? "Écoute en cours — parlez, appuyez sur le micro pour arrêter" : "Listening — speak now, tap mic to stop"}</span>
+            <span>{lang === "fr" ? "Écoute en cours — parlez, appuyez sur le micro pour arrêter" : "Listening — speak now, tap mic to stop"}</span>
           </div>
         )}
         <div className={`input-wrap${isListening ? " recording" : ""}`}>
@@ -667,17 +688,17 @@ ${rulesContext}`;
               e.target.style.height = e.target.scrollHeight + "px";
             }}
             onKeyDown={handleKeyDown}
-            placeholder={isListening ? (voiceLang === "fr-FR" ? "Parlez maintenant…" : "Speak now…") : "Ask about a rule…"}
+            placeholder={isListening ? (lang === "fr" ? "Parlez maintenant…" : "Speak now…") : (lang === "fr" ? "Posez une question…" : "Ask about a rule…")}
             disabled={loading}
             style={{ height: "52px" }}
           />
           <button
-            className={`lang-toggle${voiceLang === "fr-FR" ? " active" : ""}`}
-            onClick={() => setVoiceLang(v => v === "en-US" ? "fr-FR" : "en-US")}
-            title="Toggle voice language"
+            className={`lang-toggle${lang === "fr" ? " active" : ""}`}
+            onClick={() => { setLang(l => l === "en" ? "fr" : "en"); setMessages([]); setInput(""); }}
+            title={lang === "fr" ? "Passer en anglais" : "Switch to French"}
             disabled={isListening}
           >
-            {voiceLang === "fr-FR" ? "FR" : "EN"}
+            {lang === "fr" ? "FR" : "EN"}
           </button>
           <button className={`mic-btn${isListening ? " listening" : ""}`} onClick={toggleVoice} disabled={loading} title={isListening ? "Stop recording" : "Ask by voice"}>
             {isListening ? (
@@ -691,7 +712,9 @@ ${rulesContext}`;
           </button>
         </div>
         <p className="disclaimer">
-          Full 2026–2027 rulebook indexed locally · AI answers grounded in rule text · Not an official USAU resource
+          {lang === "fr"
+            ? "Règlement 2024–2025 indexé localement · Réponses IA ancrées dans le texte des règles · Pas une ressource officielle USAU"
+            : "Full 2026–2027 rulebook indexed locally · AI answers grounded in rule text · Not an official USAU resource"}
         </p>
       </div>
     </div>
