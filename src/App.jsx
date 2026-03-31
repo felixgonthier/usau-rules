@@ -479,7 +479,7 @@ ${rulesContext}`;
     }
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.lang = "en-US";
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
@@ -490,9 +490,11 @@ ${rulesContext}`;
       }
     };
     recognition.onresult = (e) => {
-      const transcript = e.results[0][0].transcript;
+      let transcript = "";
+      for (let i = 0; i < e.results.length; i++) {
+        transcript += e.results[i][0].transcript;
+      }
       setInput(transcript);
-      inputRef.current?.focus();
     };
     recognitionRef.current = recognition;
     try {
@@ -532,6 +534,10 @@ ${rulesContext}`;
         .mic-btn.listening { color: #d4a853; }
         @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(212,168,83,0.4); } 50% { box-shadow: 0 0 0 6px rgba(212,168,83,0); } }
         .mic-btn.listening { animation: micPulse 1.2s ease-in-out infinite; }
+        .input-wrap.recording { border-color: rgba(212,168,83,0.35); box-shadow: 0 0 0 3px rgba(212,168,83,0.07); }
+        @keyframes recDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .rec-pill { display: flex; align-items: center; gap: 6px; font-size: 11px; font-family: 'DM Mono', monospace; color: #d4a853; letter-spacing: 0.4px; margin-bottom: 8px; }
+        .rec-dot { width: 7px; height: 7px; border-radius: 50%; background: #d4a853; animation: recDot 1s ease-in-out infinite; flex-shrink: 0; }
         .clear-btn { background: none; border: 1px solid rgba(255,255,255,0.06); color: #4a4a4a; font-size: 11px; font-family: 'DM Mono', monospace; padding: 5px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; text-transform: uppercase; }
         .clear-btn:hover { border-color: rgba(255,255,255,0.1); color: #777; }
         .user-bubble { background: linear-gradient(135deg, rgba(232,200,114,0.1), rgba(232,200,114,0.04)); border: 1px solid rgba(232,200,114,0.1); border-radius: 18px 18px 6px 18px; padding: 12px 18px; }
@@ -639,8 +645,14 @@ ${rulesContext}`;
 
       {/* Input */}
       <div className="input-bar" style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.025)", background: "rgba(9,9,13,0.95)", backdropFilter: "blur(16px)" }}>
-        <div className="input-wrap">
-          <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={isListening ? "Listening…" : "Ask about a rule…"} disabled={loading} />
+        {isListening && (
+          <div className="rec-pill">
+            <span className="rec-dot" />
+            <span>Listening — speak now, tap mic to stop</span>
+          </div>
+        )}
+        <div className={`input-wrap${isListening ? " recording" : ""}`}>
+          <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={isListening ? "Speak now…" : "Ask about a rule…"} disabled={loading} />
           <button className={`mic-btn${isListening ? " listening" : ""}`} onClick={toggleVoice} disabled={loading} title={isListening ? "Stop recording" : "Ask by voice"}>
             {isListening ? (
               <svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" opacity="0.3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3M9 21h6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
