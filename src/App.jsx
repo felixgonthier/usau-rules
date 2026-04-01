@@ -292,7 +292,7 @@ function parseFormatted(text) {
     } else {
       flushBullets();
       if (trimmed === "") blocks.push({ type: "spacer" });
-      else if (/^\*\*TL;DR:\*\*/.test(trimmed)) blocks.push({ type: "tldr", text: trimmed.replace(/^\*\*TL;DR:\*\*\s*/, "") });
+      else if (/^\*\*TL;DR\s*:?\*\*\s*:?/i.test(trimmed)) blocks.push({ type: "tldr", text: trimmed.replace(/^\*\*TL;DR\s*:?\*\*\s*:?\s*/i, "") });
       else blocks.push({ type: "paragraph", text: trimmed });
     }
   }
