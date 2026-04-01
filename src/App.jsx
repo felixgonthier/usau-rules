@@ -310,10 +310,8 @@ function InlineFormatted({ text }) {
       // Bold
       parts.push(
         <span key={key++} style={{
-          color: "#edd98b", fontWeight: 600, fontFamily: "'DM Mono', monospace",
-          fontSize: "0.9em", background: "rgba(232,200,114,0.08)", padding: "2px 6px",
-          borderRadius: 4, border: "1px solid rgba(232,200,114,0.1)",
-          display: "inline", overflowWrap: "anywhere",
+          color: "#edd98b", fontWeight: 700, fontFamily: "'DM Mono', monospace",
+          fontSize: "0.92em",
         }}>{match[1]}</span>
       );
     } else if (match[2]) {
