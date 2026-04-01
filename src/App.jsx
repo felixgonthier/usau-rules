@@ -284,9 +284,11 @@ function parseFormatted(text) {
       flushBullets();
       blocks.push({ type: "hr" });
     } else if (trimmed.startsWith("- ") || trimmed.startsWith("• ") || trimmed.startsWith("* ")) {
-      currentBullets.push(trimmed.slice(2));
+      const indent = line.match(/^\s*/)[0].length;
+      currentBullets.push({ text: trimmed.slice(2), depth: indent > 0 ? 1 : 0 });
     } else if (/^\d+\.\s/.test(trimmed)) {
-      currentBullets.push(trimmed.replace(/^\d+\.\s*/, ""));
+      const indent = line.match(/^\s*/)[0].length;
+      currentBullets.push({ text: trimmed.replace(/^\d+\.\s*/, ""), depth: indent > 0 ? 1 : 0 });
     } else {
       flushBullets();
       if (trimmed === "") blocks.push({ type: "spacer" });
@@ -355,16 +357,37 @@ function FormattedMessage({ text }) {
             <InlineFormatted text={block.text} />
           </p>
         );
-        if (block.type === "bullets") return (
-          <ul key={i} style={{ margin: "2px 0", paddingLeft: 4, display: "flex", flexDirection: "column", gap: 7 }}>
-            {block.items.map((item, j) => (
-              <li key={j} style={{ lineHeight: 1.75, listStyleType: "none", position: "relative", paddingLeft: 20, fontSize: "0.96em", color: "#aaa89c", wordBreak: "break-word", overflowWrap: "anywhere" }}>
-                <span style={{ position: "absolute", left: 3, top: "0.6em", width: 6, height: 6, borderRadius: "50%", background: "rgba(232,200,114,0.3)", border: "1px solid rgba(232,200,114,0.15)" }} />
-                <InlineFormatted text={item} />
-              </li>
-            ))}
-          </ul>
-        );
+        if (block.type === "bullets") {
+          // Group items: each depth-0 item may have depth-1 children
+          const grouped = [];
+          for (const item of block.items) {
+            if (item.depth === 0 || grouped.length === 0) {
+              grouped.push({ text: item.text, children: [] });
+            } else {
+              grouped[grouped.length - 1].children.push(item.text);
+            }
+          }
+          return (
+            <ul key={i} style={{ margin: "2px 0", paddingLeft: 4, display: "flex", flexDirection: "column", gap: 7 }}>
+              {grouped.map((item, j) => (
+                <li key={j} style={{ lineHeight: 1.75, listStyleType: "none", position: "relative", paddingLeft: 20, fontSize: "0.96em", color: "#aaa89c", wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                  <span style={{ position: "absolute", left: 3, top: "0.6em", width: 6, height: 6, borderRadius: "50%", background: "rgba(232,200,114,0.3)", border: "1px solid rgba(232,200,114,0.15)" }} />
+                  <InlineFormatted text={item.text} />
+                  {item.children.length > 0 && (
+                    <ul style={{ margin: "4px 0 0 0", paddingLeft: 4, display: "flex", flexDirection: "column", gap: 5 }}>
+                      {item.children.map((child, k) => (
+                        <li key={k} style={{ lineHeight: 1.75, listStyleType: "none", position: "relative", paddingLeft: 20, fontSize: "0.93em", color: "#918e84", wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                          <span style={{ position: "absolute", left: 3, top: "0.65em", width: 4, height: 4, borderRadius: "50%", background: "rgba(232,200,114,0.18)", border: "1px solid rgba(232,200,114,0.1)" }} />
+                          <InlineFormatted text={child} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          );
+        }
         return null;
       })}
     </div>
@@ -457,7 +480,7 @@ export default function USAURulesHelper() {
 Format responses clearly:
 - Use **bold** for rule numbers and key terms
 - Use ### headings to separate major topics if answer covers multiple areas
-- Use bullet points (- ) for lists
+- Use bullet points (- ) for lists; use indented bullets (  - ) for sub-items within a list item
 - Use --- to separate distinct sections when helpful
 - Keep paragraphs short (2-3 sentences max)
 
