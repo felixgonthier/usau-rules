@@ -359,9 +359,11 @@ function FormattedMessage({ text }) {
           </p>
         );
         if (block.type === "tldr") return (
-          <div key={i} style={{ marginTop: 6, padding: "10px 14px", borderRadius: 8, background: "rgba(232,200,114,0.07)", border: "1px solid rgba(232,200,114,0.2)", display: "flex", gap: 10, alignItems: "flex-start" }}>
-            <span style={{ flexShrink: 0, fontSize: "0.72em", fontWeight: 700, letterSpacing: "0.08em", color: "#edd98b", fontFamily: "'DM Mono', monospace", paddingTop: 3, opacity: 0.85 }}>TL;DR</span>
-            <p style={{ margin: 0, lineHeight: 1.7, color: "#ccc8b8", fontSize: "0.94em", wordBreak: "break-word", overflowWrap: "anywhere" }}>
+          <div key={i} style={{ marginTop: 14, borderRadius: 10, background: "linear-gradient(135deg, rgba(237,217,139,0.13) 0%, rgba(237,217,139,0.04) 100%)", borderLeft: "3px solid #edd98b", padding: "12px 16px 12px 14px", boxShadow: "0 1px 8px rgba(0,0,0,0.18)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+              <span style={{ fontSize: "0.68em", fontWeight: 800, letterSpacing: "0.12em", color: "#1a1a1a", fontFamily: "'DM Mono', monospace", background: "#edd98b", borderRadius: 4, padding: "2px 7px", lineHeight: 1.6, textTransform: "uppercase" }}>TL;DR</span>
+            </div>
+            <p style={{ margin: 0, lineHeight: 1.7, color: "#e8e0c8", fontSize: "0.95em", wordBreak: "break-word", overflowWrap: "anywhere" }}>
               <InlineFormatted text={block.text} />
             </p>
           </div>
@@ -438,7 +440,7 @@ export default function USAURulesHelper() {
   const [loading, setLoading] = useState(false);
   const [searchedSections, setSearchedSections] = useState([]);
   const [isListening, setIsListening] = useState(false);
-  const [lang, setLang] = useState("en");
+  const [lang, setLang] = useState(() => sessionStorage.getItem("lang") || "en");
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -664,7 +666,7 @@ ${rulesContext}`;
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             className={`lang-toggle${lang === "fr" ? " active" : ""}`}
-            onClick={() => { setLang(l => l === "en" ? "fr" : "en"); setMessages([]); setInput(""); }}
+            onClick={() => { const next = lang === "en" ? "fr" : "en"; sessionStorage.setItem("lang", next); setLang(next); setMessages([]); setInput(""); }}
             title={lang === "fr" ? "Passer en anglais" : "Switch to French"}
             disabled={isListening}
           >
