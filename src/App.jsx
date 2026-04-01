@@ -344,7 +344,11 @@ function FormattedMessage({ text }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {blocks.map((block, i) => {
         if (block.type === "spacer") return <div key={i} style={{ height: 4 }} />;
-        if (block.type === "hr") return <div key={i} style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "6px 0" }} />;
+        if (block.type === "hr") {
+          const next = blocks[i + 1];
+          if (next && next.type === "tldr") return null;
+          return <div key={i} style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "6px 0" }} />;
+        }
         if (block.type === "heading") {
           const sizes = { 1: 16, 2: 14.5, 3: 13.5 };
           return (
@@ -359,7 +363,7 @@ function FormattedMessage({ text }) {
           </p>
         );
         if (block.type === "tldr") return (
-          <div key={i} style={{ marginTop: 14, borderRadius: 10, background: "linear-gradient(135deg, rgba(237,217,139,0.13) 0%, rgba(237,217,139,0.04) 100%)", borderLeft: "3px solid #edd98b", padding: "12px 16px 12px 14px", boxShadow: "0 1px 8px rgba(0,0,0,0.18)" }}>
+          <div key={i} style={{ marginTop: 14, borderRadius: 10, background: "linear-gradient(135deg, rgba(237,217,139,0.13) 0%, rgba(237,217,139,0.04) 100%)", padding: "12px 16px", boxShadow: "0 1px 8px rgba(0,0,0,0.18)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
               <span style={{ fontSize: "0.68em", fontWeight: 800, letterSpacing: "0.12em", color: "#1a1a1a", fontFamily: "'DM Mono', monospace", background: "#edd98b", borderRadius: 4, padding: "2px 7px", lineHeight: 1.6, textTransform: "uppercase" }}>TL;DR</span>
             </div>
