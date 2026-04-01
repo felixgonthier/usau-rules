@@ -292,6 +292,7 @@ function parseFormatted(text) {
     } else {
       flushBullets();
       if (trimmed === "") blocks.push({ type: "spacer" });
+      else if (/^\*\*TL;DR:\*\*/.test(trimmed)) blocks.push({ type: "tldr", text: trimmed.replace(/^\*\*TL;DR:\*\*\s*/, "") });
       else blocks.push({ type: "paragraph", text: trimmed });
     }
   }
@@ -356,6 +357,14 @@ function FormattedMessage({ text }) {
           <p key={i} style={{ margin: 0, lineHeight: 1.8, color: "#b0ac9f", wordBreak: "break-word", overflowWrap: "anywhere" }}>
             <InlineFormatted text={block.text} />
           </p>
+        );
+        if (block.type === "tldr") return (
+          <div key={i} style={{ marginTop: 6, padding: "10px 14px", borderRadius: 8, background: "rgba(232,200,114,0.07)", border: "1px solid rgba(232,200,114,0.2)", display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <span style={{ flexShrink: 0, fontSize: "0.72em", fontWeight: 700, letterSpacing: "0.08em", color: "#edd98b", fontFamily: "'DM Mono', monospace", paddingTop: 3, opacity: 0.85 }}>TL;DR</span>
+            <p style={{ margin: 0, lineHeight: 1.7, color: "#ccc8b8", fontSize: "0.94em", wordBreak: "break-word", overflowWrap: "anywhere" }}>
+              <InlineFormatted text={block.text} />
+            </p>
+          </div>
         );
         if (block.type === "bullets") {
           // Group items: each depth-0 item may have depth-1 children
@@ -483,6 +492,9 @@ Format responses clearly:
 - Use bullet points (- ) for lists; use indented bullets (  - ) for sub-items within a list item
 - Use --- to separate distinct sections when helpful
 - Keep paragraphs short (2-3 sentences max)
+- If your response is long (more than 3 bullet points or 2+ paragraphs), end with a separator and a one-sentence plain-language summary using exactly this format:
+---
+**TL;DR:** <your summary here>
 
 RULES TEXT (from the ${edition} Official Rules of Ultimate):
 ${rulesContext}`;
